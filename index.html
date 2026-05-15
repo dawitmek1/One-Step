@@ -1372,6 +1372,110 @@ button,.icon-btn,.nav-item,.task-item,.add-pill,.bh-btn,.mi,.cal-cell,.cal-nbtn{
 .file-import-input{position:absolute;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;}
 @media (max-width:360px){.checkin-item{padding:10px}.checkin-meta{display:none}.habit-delete,.log-delete{width:32px;height:32px}}
 
+
+
+/* ────────────────────────────────────────────────
+   FINAL PASS: native nav placement, normalized type,
+   stats filter fit, calmer splash, app lock.
+   ──────────────────────────────────────────────── */
+:root{
+  --bottom-safe:env(safe-area-inset-bottom, 0px);
+  --nav-height:58px;
+}
+body{font-size:13px!important;}
+.topbar{
+  grid-template-columns:50px minmax(0,1fr) 50px!important;
+  min-height:calc(58px + var(--top-safe))!important;
+  height:calc(58px + var(--top-safe))!important;
+  padding:var(--top-safe) var(--x) 6px!important;
+}
+.topbar .icon-btn{width:46px!important;height:46px!important;min-width:46px!important;border-radius:15px!important;}
+.topbar .icon-btn svg{width:22px!important;height:22px!important;}
+.topbar-center{font-size:11px!important;}
+.page-title-bar,.cal-month-lbl{font-size:14px!important;letter-spacing:-.015em!important;}
+.scroll-area{padding-top:10px!important;padding-bottom:calc(var(--nav-height) + var(--bottom-safe) + 8px)!important;}
+.bottom-nav{
+  bottom:0!important;
+  padding:0 max(10px, calc((100vw - var(--app-max)) / 2 + 10px)) max(4px, var(--bottom-safe))!important;
+}
+.nav-pill{height:52px!important;border-radius:18px!important;padding:3px!important;}
+.nav-item{height:46px!important;border-radius:15px!important;font-size:9px!important;letter-spacing:.03em!important;}
+/* Calendar type and sizing — keep it calm and compact on small screens */
+.cal-body{padding:8px 0 0!important;}
+.cal-grid{gap:4px!important;margin-bottom:12px!important;}
+.cal-dlbl{font-size:8px!important;padding:2px 0!important;}
+.cal-cell{
+  min-height:0!important;
+  height:auto!important;
+  aspect-ratio:1/1!important;
+  border-radius:10px!important;
+  font-size:11px!important;
+  font-weight:650!important;
+  line-height:1!important;
+}
+.cal-cell.today-cell{font-weight:760!important;}
+.cal-nbtn{width:34px!important;height:34px!important;border-radius:12px!important;}
+.cal-nbtn svg{width:13px!important;height:13px!important;}
+.day-panel{margin-top:8px!important;padding:13px!important;border-radius:17px!important;}
+.dp-date{font-size:14px!important;}
+.dp-status{font-size:8px!important;padding:4px 7px!important;}
+.dp-tname{font-size:12px!important;}
+/* Stats topbar: filters stay inside the screen */
+.stats-topbar{
+  grid-template-columns:46px minmax(0,1fr) auto!important;
+  gap:6px!important;
+  padding-left:var(--x)!important;
+  padding-right:var(--x)!important;
+}
+.stats-topbar .page-title-bar{justify-self:start!important;text-align:left!important;font-size:14px!important;}
+.stats-filter{display:flex!important;gap:4px!important;max-width:46vw!important;overflow:visible!important;justify-content:flex-end!important;}
+.stats-filter .flt-btn{
+  flex:0 1 auto!important;
+  min-width:0!important;
+  padding:6px 7px!important;
+  font-size:8px!important;
+  letter-spacing:.04em!important;
+  white-space:nowrap!important;
+}
+.stats-shell{padding-left:0!important;padding-right:0!important;}
+.stats-hero-title{font-size:24px!important;}
+.stats-score{font-size:36px!important;}
+.stats-kpi strong{font-size:24px!important;}
+.stats-card-title{font-size:14px!important;}
+/* Splash: simpler, less intense, one-step language */
+.app-splash{background:var(--bg)!important;}
+.splash-card{gap:12px!important;}
+.splash-mark{width:68px!important;height:68px!important;border-radius:22px!important;box-shadow:none!important;}
+.splash-mark svg{width:30px!important;height:30px!important;}
+.splash-title{font-size:24px!important;letter-spacing:-.045em!important;}
+.splash-sub{font-size:10px!important;letter-spacing:.1em!important;}
+.splash-loader{width:82px!important;height:3px!important;}
+/* Lock screen */
+.lock-overlay{position:fixed;inset:0;z-index:10000;background:var(--bg);display:none;align-items:center;justify-content:center;padding:24px;color:var(--text);}
+.lock-overlay.open{display:flex;}
+.lock-card{width:min(340px,92vw);background:var(--card);border:1px solid var(--b2);border-radius:26px;padding:24px;box-shadow:0 24px 80px rgba(0,0,0,.28);text-align:center;}
+.lock-icon{width:58px;height:58px;border-radius:20px;border:1px solid var(--gb);background:var(--gdim);display:grid;place-items:center;margin:0 auto 14px;}
+.lock-icon svg{width:28px;height:28px;stroke:var(--gold);fill:none;stroke-width:1.9;}
+.lock-title{font-size:22px;font-weight:820;letter-spacing:-.04em;margin-bottom:6px;}
+.lock-copy{font-size:12px;line-height:1.5;color:var(--muted2);margin-bottom:16px;}
+.lock-input{width:100%;height:50px;border-radius:16px;border:1px solid var(--b2);background:var(--card2);color:var(--text);text-align:center;font-size:20px!important;font-weight:800;letter-spacing:.24em;outline:none;margin-bottom:12px;}
+.lock-input:focus{border-color:var(--gb);}
+.lock-actions{display:grid;grid-template-columns:1fr;gap:8px;}
+.lock-btn{height:46px;border-radius:15px;border:1px solid var(--b2);background:var(--gold);color:var(--bg);font-weight:800;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;}
+.lock-btn.secondary{background:transparent;color:var(--muted2);}
+.lock-error{min-height:18px;font-size:11px;color:var(--red);margin-top:8px;}
+.mi.locked-action{color:var(--gold);}
+@media (max-width:360px){
+  .topbar{grid-template-columns:44px minmax(0,1fr) 44px!important;gap:5px!important;}
+  .topbar .icon-btn{width:42px!important;height:42px!important;min-width:42px!important;border-radius:14px!important;}
+  .topbar .icon-btn svg{width:20px!important;height:20px!important;}
+  .stats-filter{max-width:50vw!important;gap:3px!important;}
+  .stats-filter .flt-btn{padding:5px 5px!important;font-size:7.5px!important;}
+  .cal-cell{font-size:10px!important;border-radius:8px!important;}
+  .nav-pill{height:50px!important;}
+  .nav-item{height:44px!important;font-size:8.5px!important;}
+}
+
 </style>
 </head>
 <body data-theme="obsidian">
@@ -1382,8 +1486,8 @@ button,.icon-btn,.nav-item,.task-item,.add-pill,.bh-btn,.mi,.cal-cell,.cal-nbtn{
       <svg viewBox="0 0 24 24"><path d="M12 3l7 4v5c0 4.5-2.8 7.8-7 9-4.2-1.2-7-4.5-7-9V7l7-4z"/><path d="M8.5 12.2l2.2 2.2 4.8-5.1"/></svg>
     </div>
     <div>
-      <div class="splash-title">Discipline</div>
-      <div class="splash-sub">Build the standard</div>
+      <div class="splash-title">Progress</div>
+      <div class="splash-sub">One step at a time</div>
     </div>
     <div class="splash-loader" aria-hidden="true"><span></span></div>
   </div>
@@ -1655,6 +1759,7 @@ button,.icon-btn,.nav-item,.task-item,.add-pill,.bh-btn,.mi,.cal-cell,.cal-nbtn{
       <div class="mi tool-action" onclick="refreshUIFromMenu()"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.5 9a9 9 0 0114.8-3.4L23 10"/><path d="M20.5 15a9 9 0 01-14.8 3.4L1 14"/></svg>Refresh UI</div>
       <div class="mi tool-action" onclick="exportData()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export Data</div>
       <div class="mi tool-action" onclick="openImportData()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import Data</div>
+      <div class="mi tool-action locked-action" onclick="lockAppFromMenu()"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>Lock App</div>
     </div>
     <div class="menu-ver">v1.0</div>
   </div>
@@ -2495,6 +2600,80 @@ window.addEventListener('load',()=>setTimeout(finishSplash,850));
 setTimeout(finishSplash,1800);
 
 
+
+
+
+// ════════════════════════════════════════════════════
+// APP LOCK
+// ════════════════════════════════════════════════════
+const LOCK_PIN_KEY = DB_KEY + '_lock_pin';
+const LOCKED_KEY = DB_KEY + '_is_locked';
+let __lockSetupMode = false;
+function getLockPin(){ try{return localStorage.getItem(LOCK_PIN_KEY)||'';}catch{return '';} }
+function setLockPin(pin){ localStorage.setItem(LOCK_PIN_KEY,pin); }
+function setLockedState(v){ localStorage.setItem(LOCKED_KEY, v ? '1' : '0'); }
+function isLockedState(){ try{return localStorage.getItem(LOCKED_KEY)==='1';}catch{return false;} }
+function showLockOverlay(setup){
+  __lockSetupMode=!!setup;
+  const ov=document.getElementById('lock-overlay');
+  const title=document.getElementById('lock-title');
+  const copy=document.getElementById('lock-copy');
+  const input=document.getElementById('lock-pin-input');
+  const err=document.getElementById('lock-error');
+  const cancel=document.getElementById('lock-cancel-btn');
+  if(!ov)return;
+  title.textContent=setup?'Create a PIN':'App locked';
+  copy.textContent=setup?'Choose a 4-digit PIN. Your saved tasks and stats stay on this device.':'Enter your 4-digit PIN to continue.';
+  cancel.style.display=setup?'block':'none';
+  err.textContent='';
+  input.value='';
+  ov.classList.add('open');
+  setTimeout(()=>input.focus(),80);
+}
+function lockAppFromMenu(){
+  document.getElementById('menu-bg').classList.remove('open');
+  if(!getLockPin()) showLockOverlay(true);
+  else { setLockedState(true); showLockOverlay(false); }
+}
+function cancelLockSetup(){
+  if(__lockSetupMode){
+    document.getElementById('lock-overlay').classList.remove('open');
+    __lockSetupMode=false;
+  }
+}
+function unlockApp(){
+  const input=document.getElementById('lock-pin-input');
+  const err=document.getElementById('lock-error');
+  const pin=(input.value||'').replace(/\D/g,'').slice(0,4);
+  input.value=pin;
+  if(pin.length!==4){err.textContent='Enter 4 numbers.';return;}
+  if(__lockSetupMode){
+    setLockPin(pin);
+    setLockedState(true);
+    __lockSetupMode=false;
+    showLockOverlay(false);
+    showToast('Lock enabled.','green');
+    return;
+  }
+  if(pin===getLockPin()){
+    setLockedState(false);
+    document.getElementById('lock-overlay').classList.remove('open');
+    err.textContent='';
+    showToast('Unlocked.','green');
+  }else{
+    err.textContent='Incorrect PIN.';
+    input.select();
+  }
+}
+function initAppLock(){
+  const input=document.getElementById('lock-pin-input');
+  if(input){
+    input.addEventListener('input',()=>{input.value=input.value.replace(/\D/g,'').slice(0,4);});
+    input.addEventListener('keydown',(e)=>{if(e.key==='Enter')unlockApp();});
+  }
+  if(getLockPin() && isLockedState()) showLockOverlay(false);
+}
+initAppLock();
 
 // No-zoom guard for mobile webviews/Safari.
 document.addEventListener('gesturestart', function(event){ event.preventDefault(); }, {passive:false});

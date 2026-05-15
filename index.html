@@ -801,6 +801,7 @@ textarea{
 .stats-bar-track{height:100%;border-radius:14px;background:var(--card2);border:1px solid var(--b);display:flex;align-items:flex-end;overflow:hidden;padding:3px;}
 .stats-bar{width:100%;border-radius:10px;background:var(--gold);min-height:4px;transition:height .35s ease;}
 .stats-bar.low{background:var(--red);opacity:.68;}
+.stats-bar.habit{background:var(--red);opacity:.92;}
 .stats-bar.partial{background:var(--gold);opacity:.58;}
 .stats-bar.empty{background:var(--b2);opacity:.45;}
 .stats-bar-label{text-align:center;font-size:9px;color:var(--muted2);font-weight:750;}
@@ -825,6 +826,7 @@ textarea{
 .activity-cell-v2.l3{background:rgba(201,168,76,.56);}
 .activity-cell-v2.l4{background:var(--gold);}
 .activity-cell-v2.lx{background:var(--rdim);border-color:var(--rb);}
+.activity-cell-v2.habit{background:var(--red);border-color:var(--rb);}
 .activity-leg-v2{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:13px;font-size:9px;color:var(--muted);}
 .act-demo{display:block;width:13px;height:13px;border-radius:4px;background:var(--b2);border:1px solid transparent;}
 .act-demo.l0{opacity:.48;}.act-demo.l1{background:var(--gdim);border-color:var(--gb);}.act-demo.l2{background:rgba(201,168,76,.26);}.act-demo.l3{background:rgba(201,168,76,.56);}.act-demo.l4{background:var(--gold);}
@@ -1969,16 +1971,27 @@ let calMonth=new Date(), selDateK=today(), segState={cat:'Health',rep:'Once',pri
 })();
 
 
+function isTypingTarget(target){
+  return target && (
+    target.matches?.('input, textarea, select, option') ||
+    target.isContentEditable ||
+    target.closest?.('input, textarea, select, [contenteditable="true"]')
+  );
+}
 function enhanceAccessibility(){
   document.querySelectorAll('[onclick]').forEach(el=>{
-    if(!el.hasAttribute('role')) el.setAttribute('role','button');
-    if(!el.hasAttribute('tabindex')) el.setAttribute('tabindex','0');
+    const isOverlayShell=el.classList.contains('overlay') || el.classList.contains('menu-bg');
+    if(!isOverlayShell && !el.hasAttribute('role')) el.setAttribute('role','button');
+    if(!isOverlayShell && !el.hasAttribute('tabindex')) el.setAttribute('tabindex','0');
+    if(isOverlayShell) return;
     el.addEventListener('keydown',event=>{
+      if(isTypingTarget(event.target)) return;
       if(event.key==='Enter'||event.key===' '){event.preventDefault(); el.click();}
     });
   });
   document.addEventListener('keydown',event=>{
     if(event.key==='Escape'){
+      if(isTypingTarget(event.target)) return;
       document.querySelectorAll('.overlay.open,.menu-bg.open').forEach(el=>el.classList.remove('open'));
     }
   });
@@ -2106,6 +2119,7 @@ function closeDeleteConfirmBg(e){
 }
 
 document.addEventListener('keydown',e=>{
+  if(isTypingTarget(e.target)) return;
   if(e.key==='Escape'&&document.getElementById('delete-confirm').classList.contains('open'))closeDeleteConfirm();
 });
 
@@ -2368,47 +2382,56 @@ function getDayStats(k){
   const tasks=getTasks(k);
   const done=getDoneSet(k);
   const doneC=tasks.filter(t=>done.has(t.id)).length;
+  const habits=getBadHabits().filter(b=>b.date===k);
+  const habitC=habits.length;
   const pct=tasks.length?Math.round((doneC/tasks.length)*100):0;
-  return {tasks,doneC,total:tasks.length,pct};
+  const adjustedPct=tasks.length?Math.max(0,pct-(habitC*10)):0;
+  return {tasks,doneC,total:tasks.length,pct,adjustedPct,habits,habitC,hasHabit:habitC>0};
 }
 function renderStats(period){
   const todayK=today();
   const todayDt=parseKey(todayK);
   const days=getPeriodDays(period);
-  let totalTasks=0,doneTasks=0,lowDays=0,plannedDays=0,cleanDays=0;
+  let totalTasks=0,doneTasks=0,lowDays=0,plannedDays=0,cleanDays=0,totalCheckins=0,checkinDays=0;
   const catMap={};
 
   for(let i=days-1;i>=0;i--){
     const d=new Date(todayDt); d.setDate(todayDt.getDate()-i);
     const k=dateKey(d);
     const ds=getDayStats(k);
-    if(!ds.total)continue;
-    plannedDays++;
-    totalTasks+=ds.total;
-    doneTasks+=ds.doneC;
-    if(ds.pct===0)lowDays++;
-    if(ds.pct===100)cleanDays++;
-    ds.tasks.forEach(t=>{
-      const name=t.cat||'Other';
-      if(!catMap[name])catMap[name]={total:0,done:0};
-      catMap[name].total++;
-      if(getDoneSet(k).has(t.id))catMap[name].done++;
-    });
+    totalCheckins+=ds.habitC;
+    if(ds.habitC)checkinDays++;
+    if(ds.total || ds.habitC)plannedDays++;
+    if(ds.total){
+      totalTasks+=ds.total;
+      doneTasks+=ds.doneC;
+      if(ds.pct===100 && !ds.habitC)cleanDays++;
+      ds.tasks.forEach(t=>{
+        const name=t.cat||'Other';
+        if(!catMap[name])catMap[name]={total:0,done:0};
+        catMap[name].total++;
+        if(getDoneSet(k).has(t.id))catMap[name].done++;
+      });
+    }
+    if((ds.total && ds.adjustedPct<50) || ds.habitC)lowDays++;
   }
 
   const {streak,best}=calcStreak();
-  const completion=totalTasks?Math.round((doneTasks/totalTasks)*100):0;
-  const bhCount=getBadHabits().filter(b=>{const diff=(todayDt-parseKey(b.date))/86400000;return diff>=0&&diff<days;}).length;
+  const rawCompletion=totalTasks?Math.round((doneTasks/totalTasks)*100):0;
+  const checkinPenalty=Math.min(totalCheckins*5,40);
+  const completion=totalTasks?Math.max(0,rawCompletion-checkinPenalty):0;
   const remaining=Math.max(totalTasks-doneTasks,0);
 
   setText('stat-period',periodLabel(period));
   setText('stat-score',completion+'%');
-  setText('stat-score-sub',totalTasks ? `${doneTasks} completed · ${remaining} remaining · ${plannedDays} active days` : 'No tasks recorded yet. Add tasks to start seeing your stats.');
+  setText('stat-score-sub',totalTasks
+    ? `${doneTasks} completed · ${remaining} remaining · ${totalCheckins} check-ins factored in`
+    : (totalCheckins ? `${totalCheckins} check-ins recorded. Add tasks to start tracking completion.` : 'No tasks recorded yet. Add tasks to start seeing your stats.'));
   setText('stat-streak',streak);
   setText('stat-best',best);
   setText('stat-done',doneTasks);
   setText('stat-total-label','of '+totalTasks+' tasks');
-  setText('stat-bh',bhCount);
+  setText('stat-bh',totalCheckins);
   setText('stat-clean-days',cleanDays+' clean '+(cleanDays===1?'day':'days'));
   setText('stat-low-days',lowDays+' low '+(lowDays===1?'day':'days'));
   const bar=document.getElementById('stat-progress-bar');
@@ -2427,12 +2450,14 @@ function renderLastSevenBars(todayDt){
     const k=dateKey(d);
     const ds=getDayStats(k);
     const label=names[d.getDay()];
-    const height=ds.total?Math.max(ds.pct,6):4;
-    const cls=!ds.total?'empty':ds.pct===100?'perfect':ds.pct===0?'low':'partial';
-    bars.push(`<div class="stats-bar-item" title="${k}: ${ds.total?ds.pct+'% complete':'No tasks'}">
+    const score=ds.total?ds.adjustedPct:0;
+    const height=ds.total?Math.max(score,6):(ds.habitC?28:4);
+    const cls=ds.habitC?'habit':(!ds.total?'empty':score===100?'perfect':score===0?'low':'partial');
+    const detail=ds.total ? `${score}% score · ${ds.doneC}/${ds.total} tasks${ds.habitC?' · '+ds.habitC+' check-in'+(ds.habitC===1?'':'s'):''}` : (ds.habitC ? `${ds.habitC} check-in${ds.habitC===1?'':'s'}` : 'No tasks');
+    bars.push(`<div class="stats-bar-item" title="${k}: ${detail}">
       <div class="stats-bar-track"><span class="stats-bar ${cls}" style="height:${height}%"></span></div>
       <div class="stats-bar-label">${label}</div>
-      <div class="stats-bar-num">${ds.total?ds.pct+'%':'—'}</div>
+      <div class="stats-bar-num">${ds.total?score+'%':(ds.habitC?'⚑':'—')}</div>
     </div>`);
   }
   const el=document.getElementById('bar-chart');
@@ -2462,7 +2487,7 @@ function renderActivity12Weeks(){
   const todayDt=parseKey(today());
   const start=new Date(todayDt);
   start.setDate(todayDt.getDate()-83);
-  let totalTasks=0,doneTasks=0,activeDays=0,cleanDays=0;
+  let totalTasks=0,doneTasks=0,activeDays=0,cleanDays=0,totalCheckins=0,checkinDays=0;
   const weeks=[];
   for(let w=0;w<12;w++){
     const cells=[];
@@ -2472,26 +2497,36 @@ function renderActivity12Weeks(){
       const ds=getDayStats(k);
       let cls='l0';
       let label='No tasks';
+      if(ds.habitC){
+        totalCheckins+=ds.habitC;
+        checkinDays++;
+      }
       if(ds.total){
         totalTasks+=ds.total;
         doneTasks+=ds.doneC;
-        if(ds.doneC>0)activeDays++;
-        if(ds.pct===100)cleanDays++;
-        if(ds.pct===0)cls='lx';
-        else if(ds.pct<50)cls='l1';
-        else if(ds.pct<80)cls='l2';
-        else if(ds.pct<100)cls='l3';
+        if(ds.doneC>0||ds.habitC)activeDays++;
+        if(ds.pct===100 && !ds.habitC)cleanDays++;
+        if(ds.habitC)cls='habit';
+        else if(ds.adjustedPct===0)cls='lx';
+        else if(ds.adjustedPct<50)cls='l1';
+        else if(ds.adjustedPct<80)cls='l2';
+        else if(ds.adjustedPct<100)cls='l3';
         else cls='l4';
-        label=ds.pct+'% complete — '+ds.doneC+' of '+ds.total+' tasks';
+        label=ds.adjustedPct+'% score — '+ds.doneC+' of '+ds.total+' tasks'+(ds.habitC?' · '+ds.habitC+' check-in'+(ds.habitC===1?'':'s'):'');
+      } else if(ds.habitC){
+        activeDays++;
+        cls='habit';
+        label=ds.habitC+' check-in'+(ds.habitC===1?'':'s');
       }
       cells.push(`<span class="activity-cell-v2 ${cls}" title="${k}: ${label}" aria-label="${k}: ${label}"></span>`);
     }
     weeks.push(`<div class="activity-week-v2">${cells.join('')}</div>`);
   }
-  const pct=totalTasks?Math.round((doneTasks/totalTasks)*100):0;
+  const rawPct=totalTasks?Math.round((doneTasks/totalTasks)*100):0;
+  const pct=totalTasks?Math.max(0,rawPct-Math.min(totalCheckins*5,40)):0;
   grid.innerHTML=weeks.join('');
   setText('activity-total',pct+'%');
-  setText('activity-summary',totalTasks ? `${doneTasks} of ${totalTasks} tasks completed · ${cleanDays} clean days · ${activeDays} active days` : 'No activity recorded in the last 12 weeks.');
+  setText('activity-summary',totalTasks || totalCheckins ? `${doneTasks} of ${totalTasks} tasks completed · ${totalCheckins} check-ins · ${cleanDays} clean days · ${activeDays} active days` : 'No activity recorded in the last 12 weeks.');
 }
 
 // ════════════════════════════════════════════════════
